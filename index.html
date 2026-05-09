@@ -65,6 +65,7 @@
     .cw:hover .ci { transform: rotateY(180deg); }
     .cw:hover .cfront,
     .cw:hover .cmsg  { pointer-events: auto; }
+    .cw:hover .cb    { opacity: 0; }
   }
 
   /* 모바일: 탭 → 화면 중앙으로 떠오름 (로고 위) */
@@ -83,6 +84,9 @@
 
   /* 앞면은 기본 비활성 (뒤집혔을 때만 탭 가능) */
   .cfront, .cmsg { pointer-events: none; }
+
+  /* backface-visibility 렌더링 버그 대응: 앞면 보일 때 뒷면 완전히 숨김 */
+  .cw.flipped .cb { opacity: 0; }
 
   .ci {
     width: 108px; height: 162px;
