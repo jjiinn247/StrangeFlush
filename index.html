@@ -22,20 +22,18 @@
     background: url('concept image.jpg') center 30% / cover no-repeat;
     filter: brightness(0.45) saturate(1.3);
   }
-
   #overlay {
     position: fixed; inset: 0; z-index: 1;
     background: radial-gradient(ellipse 70% 60% at 50% 50%,
       rgba(8,2,2,0) 0%, rgba(8,2,2,0.45) 55%, rgba(8,2,2,0.85) 100%);
     pointer-events: none;
   }
-
   #card-field {
     position: fixed; inset: 0; z-index: 2;
     pointer-events: none;
   }
 
-  /* ── 개별 카드 ── */
+  /* ── 카드 ── */
   .cw {
     position: absolute;
     pointer-events: auto;
@@ -47,8 +45,12 @@
     cursor: pointer;
     will-change: transform;
   }
+  /* 카드 복귀 시 부드러운 이징 */
+  .cw.returning {
+    transition: transform 0.42s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
 
-  /* 데스크탑: 호버로 뒤집기 */
+  /* 데스크탑: 호버 뒤집기 */
   @media (hover: hover) {
     .cw:hover {
       transform: translate(-50%, -50%) rotate(0deg) scale(calc(var(--s, 1) * 1.08)) translateY(-20px);
@@ -56,24 +58,24 @@
     }
     .cw:hover .ci { transform: rotateY(180deg); }
     .cw:hover .cfront,
-    .cw:hover .cmsg { pointer-events: auto; }
+    .cw:hover .cmsg  { pointer-events: auto; }
   }
 
-  /* 모바일: 탭 시 화면 중앙으로 떠오름 */
+  /* 모바일: 탭 → 화면 중앙으로 떠오름 (로고 위) */
   @media (hover: none) {
     .cw.flipped {
       transform: translate(
         calc(-50% + 50vw - var(--ox)),
         calc(-50% + 46vh - var(--oy))
-      ) rotate(0deg) scale(1.35);
+      ) rotate(0deg) scale(2.1);
       z-index: 200;
     }
-    .cw.flipped .ci { transform: rotateY(180deg); }
+    .cw.flipped .ci   { transform: rotateY(180deg); }
     .cw.flipped .cfront,
     .cw.flipped .cmsg { pointer-events: auto; }
   }
 
-  /* 앞면은 기본 pointer-events 끔 (뒤집혔을 때만 활성) */
+  /* 앞면은 기본 비활성 (뒤집혔을 때만 탭 가능) */
   .cfront, .cmsg { pointer-events: none; }
 
   .ci {
@@ -81,25 +83,19 @@
     transform-style: preserve-3d;
     transition: transform 0.5s ease 0.08s;
   }
-
   .cf {
-    position: absolute; inset: 0;
-    border-radius: 9px;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+    position: absolute; inset: 0; border-radius: 9px;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
   }
 
   /* 뒷면 */
   .cb {
     background: linear-gradient(145deg, #8e0022, #6a0018, #8e0022);
-    border: 2px solid #aa0028;
-    overflow: hidden;
+    border: 2px solid #aa0028; overflow: hidden;
   }
   .cb::before {
-    content: '';
-    position: absolute; inset: 7px;
-    border: 1px solid rgba(180,0,40,0.5);
-    border-radius: 5px; z-index: 1;
+    content: ''; position: absolute; inset: 7px;
+    border: 1px solid rgba(180,0,40,0.5); border-radius: 5px; z-index: 1;
   }
   .cb-hatch {
     position: absolute; inset: 0; border-radius: 9px;
@@ -122,57 +118,33 @@
     display: flex; flex-direction: column;
     padding: 6px 5px; overflow: hidden;
   }
-  .corner {
-    display: flex; flex-direction: column;
-    align-items: center; width: 18px; line-height: 1.1;
-  }
+  .corner { display: flex; flex-direction: column; align-items: center; width: 18px; line-height: 1.1; }
   .corner .rk { font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 0.76rem; line-height: 1; }
   .corner .st { font-size: 0.62rem; line-height: 1; }
   .c-tl { align-self: flex-start; }
   .c-br { align-self: flex-end; transform: rotate(180deg); margin-top: auto; }
-
-  .cmid {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 8px; min-height: 0;
-  }
+  .cmid { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 0; }
   .suits-row { display: flex; gap: 5px; font-size: 1.35rem; line-height: 1; }
-  .cname { font-family: 'Pretendard', sans-serif; font-size: 0.68rem; font-weight: 600; color: #1a0808; text-align: center; white-space: nowrap; line-height: 1.2; }
-  .chandle {
-    font-family: 'Pretendard', sans-serif;
-    font-size: 0.42rem; color: #5a1a28;
-    text-align: center; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis; max-width: 90px;
-    text-decoration: none; display: block;
-  }
-  .chandle:hover { text-decoration: underline; }
+  .cname { font-family: 'Pretendard', sans-serif; font-size: 0.68rem; font-weight: 600; color: #1a0808; text-align: center; white-space: nowrap; line-height: 1.2; text-decoration: none; display: block; }
+  .chandle { font-family: 'Pretendard', sans-serif; font-size: 0.42rem; color: #5a1a28; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; text-decoration: none; display: block; }
+  .chandle:hover, .cname:hover { text-decoration: underline; }
   .sr { color: #cc0000; }
   .sb { color: #1a0808; }
 
   /* 앞면 (메시지) */
   .cmsg {
     background: linear-gradient(150deg, #faf6ee, #ede4d4);
-    border: 2px solid #c5bcaa;
-    transform: rotateY(180deg);
+    border: 2px solid #c5bcaa; transform: rotateY(180deg);
     display: flex; align-items: center; justify-content: center;
     padding: 14px 10px; text-align: center; border-radius: 9px;
   }
-  .cmsg-text {
-    font-family: 'Pretendard', sans-serif;
-    font-size: 0.56rem; font-weight: 400;
-    color: #2a0a10; line-height: 1.65; word-break: keep-all;
-  }
+  .cmsg-text { font-family: 'Pretendard', sans-serif; font-size: 0.56rem; font-weight: 400; color: #2a0a10; line-height: 1.65; word-break: keep-all; }
 
-  /* 히어로 로고 */
-  #hero {
-    position: fixed; inset: 0; z-index: 10;
-    display: flex; align-items: center; justify-content: center;
-    pointer-events: none;
-  }
+  /* 히어로 */
+  #hero { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; pointer-events: none; }
   #logo-link { display: block; pointer-events: auto; cursor: pointer; text-decoration: none; }
   #logo-img { display: block; width: min(420px, 62vw); height: auto; filter: invert(1); mix-blend-mode: screen; }
 
-  /* 멘트 텍스트 */
   #hero-text {
     position: fixed; left: 50%; top: calc(50% + min(210px, 21vw) + 1rem);
     transform: translateX(-50%); z-index: 1;
@@ -181,24 +153,24 @@
   #hero-text .line1 { font-size: clamp(0.6rem, 1.4vw, 0.82rem); font-weight: 400; letter-spacing: 0.22em; color: rgba(255,255,255,0.7); }
   #hero-text .line2 { font-size: clamp(0.75rem, 1.8vw, 1rem); font-weight: 600; letter-spacing: 0.45em; color: #fff; }
 
-  /* ── 모바일 크기 조정 ── */
+  /* ── 모바일 크기 ── */
   @media (max-width: 768px) {
     #hero-text { display: none; }
-    #logo-img { width: min(240px, 62vw); }
-    .ci { width: 72px; height: 108px; }
-    .cb-s { font-size: 2.4rem; }
+    #logo-img  { width: min(240px, 62vw); }
+    .ci        { width: 72px; height: 108px; }
+    .cb-s      { font-size: 2.4rem; }
     .cb::before { inset: 5px; }
-    .cf { border-radius: 6px; }
-    .corner { width: 13px; }
+    .cf        { border-radius: 6px; }
+    .corner    { width: 13px; }
     .corner .rk { font-size: 0.5rem; }
     .corner .st { font-size: 0.4rem; }
-    .suits-row { font-size: 0.9rem; gap: 3px; }
-    .cname { font-size: 0.44rem; }
-    .chandle { font-size: 0.3rem; max-width: 60px; }
-    .cfront { padding: 4px 3px; }
-    .cmsg { padding: 8px 6px; }
+    .suits-row  { font-size: 0.9rem; gap: 3px; }
+    .cname     { font-size: 0.44rem; }
+    .chandle   { font-size: 0.3rem; max-width: 60px; }
+    .cfront    { padding: 4px 3px; }
+    .cmsg      { padding: 8px 6px; }
     .cmsg-text { font-size: 0.38rem; }
-    .cmid { gap: 5px; }
+    .cmid      { gap: 5px; }
   }
 </style>
 </head>
@@ -238,44 +210,57 @@ const authors = [
 
 /* ── 데스크탑 포지션 ── */
 const SCATTER_DESK = [
-  { x: 22, y: 18, r: -44, s: 1.2  }, { x: 20, y: 55, r: -26, s: 1.15 },
-  { x: 22, y: 82, r: -52, s: 1.05 }, { x: 32, y: 10, r: -16, s: 1.1  },
-  { x: 34, y: 80, r: -36, s: 1.0  }, { x: 78, y: 18, r:  48, s: 1.2  },
-  { x: 80, y: 58, r:  30, s: 1.15 }, { x: 78, y: 82, r:  58, s: 1.05 },
-  { x: 68, y: 10, r:  22, s: 1.1  }, { x: 66, y: 80, r:  38, s: 1.0  },
-  { x: 40, y:  8, r:  -8, s: 1.0  }, { x: 60, y:  8, r:  11, s: 0.98 },
-  { x: 50, y: 88, r:   4, s: 1.05 },
+  { x:22, y:18, r:-44, s:1.2  }, { x:20, y:55, r:-26, s:1.15 },
+  { x:22, y:82, r:-52, s:1.05 }, { x:32, y:10, r:-16, s:1.1  },
+  { x:34, y:80, r:-36, s:1.0  }, { x:78, y:18, r: 48, s:1.2  },
+  { x:80, y:58, r: 30, s:1.15 }, { x:78, y:82, r: 58, s:1.05 },
+  { x:68, y:10, r: 22, s:1.1  }, { x:66, y:80, r: 38, s:1.0  },
+  { x:40, y: 8, r: -8, s:1.0  }, { x:60, y: 8, r: 11, s:0.98 },
+  { x:50, y:88, r:  4, s:1.05 },
 ];
 const DECOR_DESK = [
-  { x: 32, y: 36, r:  16, s: 1.05 }, { x: 40, y: 22, r:  -7, s: 1.0  },
-  { x: 38, y: 82, r:  20, s: 0.98 }, { x: 62, y: 82, r: -16, s: 0.98 },
-  { x: 60, y: 22, r:  10, s: 1.0  }, { x: 68, y: 40, r:  44, s: 1.05 },
-  { x: 50, y:  4, r:  -4, s: 0.92 }, { x: 16, y: 46, r: -68, s: 1.0  },
-  { x: 84, y: 52, r:  70, s: 1.0  }, { x: 30, y: 92, r:  28, s: 0.88 },
-  { x: 70, y: 92, r: -24, s: 0.88 },
+  { x:32, y:36, r: 16, s:1.05 }, { x:40, y:22, r: -7, s:1.0  },
+  { x:38, y:82, r: 20, s:0.98 }, { x:62, y:82, r:-16, s:0.98 },
+  { x:60, y:22, r: 10, s:1.0  }, { x:68, y:40, r: 44, s:1.05 },
+  { x:50, y: 4, r: -4, s:0.92 }, { x:16, y:46, r:-68, s:1.0  },
+  { x:84, y:52, r: 70, s:1.0  }, { x:30, y:92, r: 28, s:0.88 },
+  { x:70, y:92, r:-24, s:0.88 },
 ];
 
-/* ── 모바일 포지션 (세로 화면, 로고 중심 방사형) ── */
+/*
+ * 모바일 포지션 — 로고(50%,50%)를 중심으로 원형 배치.
+ * 세로 화면 보정: rx≈36vw, ry≈32vh → 픽셀상 거의 원형
+ * SCATTER: 바깥 원, DECOR: 안쪽 원
+ */
 const SCATTER_MOB = [
-  /* 상단 */
-  { x: 14, y: 10, r: -42, s: 1.0  }, { x: 38, y:  6, r: -12, s: 0.95 },
-  { x: 62, y:  6, r:  14, s: 0.95 }, { x: 86, y: 10, r:  44, s: 1.0  },
-  /* 좌우 */
-  { x:  8, y: 34, r: -58, s: 1.0  }, { x: 92, y: 34, s: 1.0, r: 58   },
-  { x:  8, y: 60, r: -52, s: 1.0  }, { x: 92, y: 60, r:  50, s: 1.0  },
-  /* 하단 */
-  { x: 18, y: 82, r: -28, s: 0.95 }, { x: 50, y: 88, r:   2, s: 0.95 },
-  { x: 82, y: 82, r:  28, s: 0.95 },
-  /* 로고 주변 (위아래) */
-  { x: 30, y: 24, r: -18, s: 0.9  }, { x: 70, y: 24, r:  18, s: 0.9  },
+  /* 바깥 원 — 12시 방향부터 시계 방향 */
+  { x:50, y:16, r: -4, s:1.0  },  /* 12시 */
+  { x:67, y:20, r: 24, s:1.0  },  /* 1시  */
+  { x:80, y:31, s:1.0, r: 50  },  /* 2시  */
+  { x:86, y:47, r: 78, s:1.0  },  /* 3시  */
+  { x:82, y:63, r:106, s:1.0  },  /* 4시  */
+  { x:70, y:75, r:134, s:1.0  },  /* 5시  */
+  { x:54, y:81, r:162, s:1.0  },  /* 6시  */
+  { x:38, y:80, r:-162, s:1.0 },  /* 7시  */
+  { x:24, y:73, r:-136, s:1.0 },  /* 8시  */
+  { x:15, y:60, r:-110, s:1.0 },  /* 9시  */
+  { x:14, y:45, r:-82,  s:1.0 },  /* 10시 */
+  { x:21, y:31, r:-54,  s:1.0 },  /* 11시 */
+  { x:34, y:20, r:-26,  s:1.0 },  /* 12시-11시 사이 */
 ];
 const DECOR_MOB = [
-  { x: 22, y: 44, r: -34, s: 1.0  }, { x: 78, y: 44, r:  34, s: 1.0  },
-  { x: 26, y: 70, r: -20, s: 0.95 }, { x: 74, y: 70, r:  20, s: 0.95 },
-  { x: 42, y: 18, r:  -6, s: 0.9  }, { x: 58, y: 18, r:   6, s: 0.9  },
-  { x: 14, y: 76, r: -60, s: 0.88 }, { x: 86, y: 76, r:  60, s: 0.88 },
-  { x: 36, y: 80, r: -14, s: 0.88 }, { x: 64, y: 80, r:  14, s: 0.88 },
-  { x: 50, y: 94, r:   0, s: 0.85 },
+  /* 안쪽 원 */
+  { x:50, y:30, r: -6, s:0.95 },
+  { x:63, y:33, r: 22, s:0.95 },
+  { x:73, y:43, r: 50, s:0.95 },
+  { x:75, y:56, r: 78, s:0.9  },
+  { x:67, y:66, r:106, s:0.95 },
+  { x:54, y:71, r:132, s:0.9  },
+  { x:40, y:70, r:-132, s:0.9 },
+  { x:28, y:63, r:-106, s:0.95},
+  { x:24, y:52, r:-78,  s:0.9 },
+  { x:27, y:40, r:-50,  s:0.95},
+  { x:38, y:32, r:-22,  s:0.95},
 ];
 
 const MESSAGES = [
@@ -283,7 +268,7 @@ const MESSAGES = [
   "주주 찐자\n바보..",
   "그냥 내가 말하면\n화 풀리던데..",
   "너랑 있을 때\n가장 나다운 내가\n되는 것 같아.",
-  "가끔 싸우거나 이유 없이\n짜증낸 적도 있었지만\n사실은 니콜라스가\n옆에 있어줘서 기뻐.",
+  "가끔 싸우거나 이유 없이\n짜증낼 적도 있었지만\n사실은 니콜라스가\n옆에 있어줘서 기뻐.",
   "네가 안 귀여우면\n누가 귀여워?",
   "반지 사이즈\n어떻게 알았어?",
   "내 새끼 손가락.",
@@ -291,25 +276,51 @@ const MESSAGES = [
   "의주는 저에게\n대체불가한 존재예요.",
 ];
 
-const RED    = new Set(["♥","♦"]);
-const sc     = s => RED.has(s) ? 'sr' : 'sb';
+const RED     = new Set(["♥","♦"]);
+const sc      = s => RED.has(s) ? 'sr' : 'sb';
 const isTouch = !window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const SCATTER = isTouch ? SCATTER_MOB : SCATTER_DESK;
 const DECOR   = isTouch ? DECOR_MOB   : DECOR_DESK;
 
 let currentFlipped = null;
+let heroTimer      = null;
+const hero = document.getElementById('hero');
 
-function closeFlipped() {
+/* 카드 떠오르기 — 로고 위로 오도록 hero를 일시적으로 낮춤 */
+function flipCard(wrap) {
+  if (heroTimer) { clearTimeout(heroTimer); heroTimer = null; }
+  /* 이전 카드 복귀 (hero 타이머 없이) */
   if (currentFlipped) {
-    currentFlipped.classList.remove('flipped');
+    const prev = currentFlipped;
     currentFlipped = null;
+    prev.classList.add('returning');
+    prev.classList.remove('flipped');
+    setTimeout(() => prev.classList.remove('returning'), 420);
   }
+  hero.style.zIndex = '1';   /* hero를 card-field(z:2) 아래로 */
+  currentFlipped = wrap;
+  wrap.classList.add('flipped');
+}
+
+/* 카드 복귀 — 배경 탭 */
+function closeFlipped() {
+  if (!currentFlipped) return;
+  const c = currentFlipped;
+  currentFlipped = null;
+  c.classList.add('returning');
+  c.classList.remove('flipped');
+  setTimeout(() => c.classList.remove('returning'), 420);
+  /* 복귀 완료 후 hero 원상 복구 */
+  if (heroTimer) clearTimeout(heroTimer);
+  heroTimer = setTimeout(() => {
+    hero.style.zIndex = '';
+    heroTimer = null;
+  }, 450);
 }
 
 function backHTML() {
   const SUITS = ['♠','♥','♦','♣'];
-  const s = SUITS[Math.floor(Math.random() * 4)];
-  return `<div class="cf cb"><div class="cb-hatch"></div><div class="cb-s">${s}</div></div>`;
+  return `<div class="cf cb"><div class="cb-hatch"></div><div class="cb-s">${SUITS[Math.floor(Math.random()*4)]}</div></div>`;
 }
 
 function makeCard(author, pos) {
@@ -326,54 +337,42 @@ function makeCard(author, pos) {
   const cls    = sc(topS);
   const suitsH = author.suits.map(s => `<span class="${sc(s)}">${s}</span>`).join('');
 
-  /* 모바일: 핸들을 <a> 링크로, 닉네임도 링크 */
-  const nameEl = (isTouch && author.url && author.url !== '#')
-    ? `<a class="cname" style="color:#1a0808;text-decoration:none" href="${author.url}" target="_blank" rel="noopener">${author.name}</a>`
+  /* 이름·핸들 — 모바일에서만 <a> 링크 */
+  const hasLink = author.url && author.url !== '#';
+  const nameEl   = hasLink && isTouch
+    ? `<a class="cname" style="color:#1a0808" href="${author.url}" target="_blank" rel="noopener">${author.name}</a>`
     : `<div class="cname">${author.name}</div>`;
-  const handleEl = (author.handle && author.url && author.url !== '#')
-    ? `<a class="chandle" href="${author.url}" target="_blank" rel="noopener">${author.handle}</a>`
-    : (author.handle ? `<div class="chandle">${author.handle}</div>` : '');
+  const handleEl = author.handle
+    ? (hasLink ? `<a class="chandle" href="${author.url}" target="_blank" rel="noopener">${author.handle}</a>`
+                : `<div class="chandle">${author.handle}</div>`)
+    : '';
 
   wrap.innerHTML = `
     <div class="ci">
       ${backHTML()}
       <div class="cf cfront">
-        <div class="corner c-tl">
-          <div class="rk ${cls}">${author.rank}</div>
-          <div class="st ${cls}">${topS}</div>
-        </div>
+        <div class="corner c-tl"><div class="rk ${cls}">${author.rank}</div><div class="st ${cls}">${topS}</div></div>
         <div class="cmid">
           <div class="suits-row">${suitsH}</div>
-          ${nameEl}
-          ${handleEl}
+          ${nameEl}${handleEl}
         </div>
-        <div class="corner c-br">
-          <div class="rk ${cls}">${author.rank}</div>
-          <div class="st ${cls}">${topS}</div>
-        </div>
+        <div class="corner c-br"><div class="rk ${cls}">${author.rank}</div><div class="st ${cls}">${topS}</div></div>
       </div>
     </div>`;
 
   if (isTouch) {
     wrap.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (!wrap.classList.contains('flipped')) {
-        closeFlipped();
-        currentFlipped = wrap;
-        wrap.classList.add('flipped');
-      }
-      /* 이미 뒤집혀 있으면 아무것도 안 함 — 배경 탭으로 닫기 */
+      if (!wrap.classList.contains('flipped')) flipCard(wrap);
+      /* 이미 뒤집힌 상태에서 카드 본체 탭 → 아무것도 안 함 (배경 탭으로 닫기) */
     });
-  } else {
-    if (author.url && author.url !== '#') {
-      wrap.addEventListener('click', () => window.open(author.url, '_blank', 'noopener'));
-    }
+  } else if (hasLink) {
+    wrap.addEventListener('click', () => window.open(author.url, '_blank', 'noopener'));
   }
   return wrap;
 }
 
 function makeDecorCard(pos, msgIdx) {
-  const msg  = MESSAGES[msgIdx % MESSAGES.length];
   const wrap = document.createElement('div');
   wrap.className = 'cw';
   wrap.style.left = pos.x + 'vw';
@@ -387,21 +386,14 @@ function makeDecorCard(pos, msgIdx) {
   wrap.innerHTML = `
     <div class="ci">
       ${backHTML()}
-      <div class="cf cmsg">
-        <div class="cmsg-text">${msg.replace(/\n/g,'<br>')}</div>
-      </div>
+      <div class="cf cmsg"><div class="cmsg-text">${MESSAGES[msgIdx % MESSAGES.length].replace(/\n/g,'<br>')}</div></div>
     </div>`;
 
   if (isTouch) {
     wrap.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (!wrap.classList.contains('flipped')) {
-        closeFlipped();
-        currentFlipped = wrap;
-        wrap.classList.add('flipped');
-      } else {
-        closeFlipped();
-      }
+      if (!wrap.classList.contains('flipped')) flipCard(wrap);
+      else closeFlipped();
     });
   } else {
     wrap.addEventListener('click', () => wrap.classList.toggle('flipped'));
@@ -412,7 +404,6 @@ function makeDecorCard(pos, msgIdx) {
 document.addEventListener('DOMContentLoaded', () => {
   const field = document.getElementById('card-field');
 
-  /* 배경(카드 필드) 탭 → 뒤집힌 카드 닫기 */
   if (isTouch) {
     field.addEventListener('click', () => closeFlipped());
   }
