@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strange Flush</title>
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #100808;
+    font-family: 'Pretendard', sans-serif;
+    color: #fff;
+  }
+
+  #bg {
+    position: fixed; inset: 0; z-index: 0;
+    background: url('concept image.jpg') center 30% / cover no-repeat;
+    filter: brightness(0.45) saturate(1.3);
+  }
+
+  #overlay {
+    position: fixed; inset: 0; z-index: 1;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%,
+      rgba(8,2,2,0) 0%, rgba(8,2,2,0.45) 55%, rgba(8,2,2,0.85) 100%);
+    pointer-events: none;
+  }
+
+  #card-field {
+    position: fixed; inset: 0; z-index: 2;
+    pointer-events: none;
+  }
+
+  .cw {
+    position: absolute;
+    pointer-events: auto;
+    transform-origin: center center;
+    transform: translate(-50%, -50%)
+               rotate(var(--r, 0deg))
+               scale(var(--s, 1));
+    perspective: 875px;           /* 700 * 1.25 */
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+    will-change: transform;
+  }
+  .cw:hover {
+    transform: translate(-50%, -50%)
+               rotate(0deg)
+               scale(calc(var(--s, 1) * 1.08))
+               translateY(-25px);
+    z-index: 100;
+  }
+
+  /* 카드 크기 1.25배 */
+  .ci {
+    width: 135px; height: 203px;
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease 0.08s;
+  }
+  .cw:hover .ci { transform: rotateY(180deg); }
+
+  .cf {
+    position: absolute; inset: 0;
+    border-radius: 11px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .cb {
+    background: linear-gradient(145deg, #8e0022, #6a0018, #8e0022);
+    border: 2px solid #aa0028;
+    overflow: hidden;
+  }
+  .cb::before {
+    content: '';
+    position: absolute; inset: 9px;
+    border: 1px solid rgba(180,0,40,0.5);
+    border-radius: 6px; z-index: 1;
+  }
+  .cb-hatch {
+    position: absolute; inset: 0; border-radius: 11px;
+    background-image:
+      repeating-linear-gradient(45deg,  rgba(0,0,0,0.15) 0, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 11px),
+      repeating-linear-gradient(-45deg, rgba(0,0,0,0.15) 0, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 11px);
+  }
+  .cb-s {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    font-size: 4.5rem; color: rgba(255,255,255,0.1);
+    line-height: 1; user-select: none; z-index: 2;
+  }
+
+  .cfront {
+    background: linear-gradient(150deg, #faf6ee, #ede4d4);
+    border: 2px solid #c5bcaa;
+    transform: rotateY(180deg);
+    display: flex; flex-direction: column;
+    padding: 8px 6px; overflow: hidden;
+  }
+  .corner {
+    display: flex; flex-direction: column;
+    align-items: center; width: 22px; line-height: 1.1;
+  }
+  .corner .rk {
+    font-family: 'Pretendard', sans-serif;
+    font-weight: 700; font-size: 0.95rem; line-height: 1;
+  }
+  .corner .st { font-size: 0.78rem; line-height: 1; }
+  .c-tl { align-self: flex-start; }
+  .c-br { align-self: flex-end; transform: rotate(180deg); margin-top: auto; }
+
+  .cmid {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px; min-height: 0;
+  }
+  .suits-row { display: flex; gap: 6px; font-size: 1.7rem; line-height: 1; }
+  .cname {
+    font-family: 'Pretendard', sans-serif;
+    font-size: 0.85rem; font-weight: 600;
+    color: #1a0808; text-align: center;
+    white-space: nowrap; line-height: 1.2;
+  }
+  .chandle {
+    font-family: 'Pretendard', sans-serif;
+    font-size: 0.53rem; color: #5a1a28;
+    text-align: center; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; max-width: 112px;
+  }
+  .sr { color: #cc0000; }
+  .sb { color: #1a0808; }
+
+  .cmsg {
+    background: linear-gradient(150deg, #faf6ee, #ede4d4);
+    border: 2px solid #c5bcaa;
+    transform: rotateY(180deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 13px;
+    text-align: center;
+    border-radius: 11px;
+  }
+  .cmsg-text {
+    font-family: 'Pretendard', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #2a0a10;
+    line-height: 1.65;
+    word-break: keep-all;
+  }
+
+  #hero {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex;
+    align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+
+  #hero-text {
+    position: fixed;
+    left: 50%;
+    top: calc(50% + min(262px, 26vw) + 1rem);
+    transform: translateX(-50%);
+    z-index: 1;
+    text-align: center;
+    line-height: 1.7;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  #logo-link {
+    display: block;
+    pointer-events: auto;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  #logo-img {
+    display: block;
+    width: min(525px, 77vw);   /* 420*1.25, 62*1.25 */
+    height: auto;
+    filter: invert(1);
+    mix-blend-mode: screen;
+  }
+
+  #hero-text .line1 {
+    font-size: clamp(0.75rem, 1.75vw, 1.03rem);
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    color: rgba(255,255,255,0.7);
+  }
+  #hero-text .line2 {
+    font-size: clamp(0.94rem, 2.25vw, 1.25rem);
+    font-weight: 600;
+    letter-spacing: 0.45em;
+    color: #fff;
+  }
+
+  /* 모바일 그리드 */
+  #mobile-view {
+    display: none;
+    position: fixed; inset: 0; z-index: 10;
+    overflow-y: auto;
+    flex-direction: column; align-items: center;
+    padding: 2rem 1rem 2rem;
+    gap: 1.5rem;
+  }
+  #mob-logo {
+    display: block;
+    width: min(260px, 72vw); height: auto;
+    filter: invert(1);
+    mix-blend-mode: screen;
+  }
+  #mob-text { text-align: center; line-height: 1.7; }
+  #mob-text .line1 {
+    font-size: 0.68rem; font-weight: 400;
+    letter-spacing: 0.2em; color: rgba(255,255,255,0.65);
+  }
+  #mob-text .line2 {
+    font-size: 0.85rem; font-weight: 600;
+    letter-spacing: 0.4em; color: #fff;
+  }
+  .card-grid {
+    width: 100%; max-width: 520px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem;
+  }
+  .gc {
+    background: rgba(20,5,5,0.7);
+    border: 1px solid rgba(200,0,58,0.25);
+    border-radius: 10px; padding: 1rem 0.75rem;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.4rem;
+    cursor: pointer; text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .gc:hover { border-color: #c8003a; transform: translateY(-3px); }
+  .gc-rank { font-size: 0.58rem; font-weight: 400; letter-spacing: 0.15em; color: rgba(200,0,58,0.6); }
+  .gc-suits { display: flex; gap: 4px; font-size: 1.1rem; }
+  .gc-name  { font-size: 0.85rem; font-weight: 600; color: #fff; }
+  .gc-handle { font-size: 0.58rem; color: rgba(255,255,255,0.45); }
+
+  @media (max-width: 768px) {
+    #card-field, #hero, #overlay { display: none; }
+    #mobile-view { display: flex; }
+  }
+  @media (max-width: 420px) {
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+<div id="overlay"></div>
+<div id="card-field"></div>
+
+<div id="hero">
+  <a id="logo-link" href="https://x.com/ncejanthology" target="_blank" rel="noopener">
+    <img id="logo-img" src="stangeflush-logo2-title.png" alt="Strange Flush">
+  </a>
+</div>
+
+<div id="hero-text">
+  <div class="line1">Nicholas ♦ EJ &nbsp;&nbsp;·&nbsp;&nbsp; Only Event &nbsp;&nbsp;·&nbsp;&nbsp; 2027</div>
+  <div class="line2">ANTHOLOGY 2</div>
+</div>
+
+<div id="mobile-view">
+  <img id="mob-logo" src="stangeflush-logo2-title.png" alt="Strange Flush">
+  <div id="mob-text">
+    <div class="line1">Nicholas ♦ EJ · Only Event · 2027</div>
+    <div class="line2">ANTHOLOGY 2</div>
+  </div>
+  <div class="card-grid" id="mob-grid"></div>
+</div>
+
+<script>
+const authors = [
+  { name:"개좋음",   handle:"@crycrycrycrycxx", url:"https://twitter.com/crycrycrycrycxx", suits:["♥","♠","♦"], rank:"A"  },
+  { name:"딸기공격", handle:"@00079000_",        url:"https://twitter.com/00079000_",        suits:["♣","♥","♦"], rank:"2"  },
+  { name:"무끼",     handle:"@mukkime",          url:"https://twitter.com/mukkime",          suits:["♠","♦","♣"], rank:"3"  },
+  { name:"변칸쵸",   handle:"@B_kancho_",        url:"https://twitter.com/B_kancho_",        suits:["♥","♣","♠"], rank:"4"  },
+  { name:"산마",     handle:"@gomihodai",        url:"https://twitter.com/gomihodai",        suits:["♦","♥","♣"], rank:"5"  },
+  { name:"양",       handle:"@8_r0o",            url:"https://twitter.com/8_r0o",            suits:["♣","♠","♥"], rank:"6"  },
+  { name:"외네",     handle:"@oene___",          url:"https://twitter.com/oene___",          suits:["♦","♠","♣"], rank:"7"  },
+  { name:"키득먼",   handle:"@nicokidding",      url:"https://twitter.com/nicokidding",      suits:["♥","♦","♠"], rank:"8"  },
+  { name:"247",      handle:"@twntyforsvn247",   url:"https://twitter.com/twntyforsvn247",   suits:["♣","♥","♦"], rank:"9"  },
+  { name:"cedar",    handle:"@cedarinrnml",      url:"https://twitter.com/cedarinrnml",      suits:["♠","♣","♥"], rank:"10" },
+  { name:"dd",       handle:null,                url:"#",                                    suits:["♦","♣","♠"], rank:"J"  },
+  { name:"hikari",   handle:"@7997_hikari",      url:"https://twitter.com/7997_hikari",      suits:["♥","♣","♦"], rank:"Q"  },
+  { name:"okon",     handle:"@milk_milk_okon",   url:"https://twitter.com/milk_milk_okon",   suits:["♠","♥","♣"], rank:"K"  },
+];
+
+const SCATTER = [
+  /* 좌측 */
+  { x: 22, y: 18, r: -44, s: 1.2  },
+  { x: 20, y: 55, r: -26, s: 1.15 },
+  { x: 22, y: 82, r: -52, s: 1.05 },
+  { x: 32, y: 10, r: -16, s: 1.1  },
+  { x: 34, y: 80, r: -36, s: 1.0  },
+  /* 우측 */
+  { x: 78, y: 18, r:  48, s: 1.2  },
+  { x: 80, y: 58, r:  30, s: 1.15 },
+  { x: 78, y: 82, r:  58, s: 1.05 },
+  { x: 68, y: 10, r:  22, s: 1.1  },
+  { x: 66, y: 80, r:  38, s: 1.0  },
+  /* 상단 가운데 */
+  { x: 40, y:  8, r:  -8, s: 1.0  },
+  { x: 60, y:  8, r:  11, s: 0.98 },
+  /* 하단 가운데 */
+  { x: 50, y: 88, r:   4, s: 1.05 },
+];
+
+const DECOR = [
+  { x: 32, y: 36, r:  16, s: 1.05 },
+  { x: 40, y: 22, r:  -7, s: 1.0  },
+  { x: 38, y: 82, r:  20, s: 0.98 },
+  { x: 62, y: 82, r: -16, s: 0.98 },
+  { x: 60, y: 22, r:  10, s: 1.0  },
+  { x: 68, y: 40, r:  44, s: 1.05 },
+  { x: 50, y:  4, r:  -4, s: 0.92 },
+  { x: 16, y: 46, r: -68, s: 1.0  },
+  { x: 84, y: 52, r:  70, s: 1.0  },
+  { x: 30, y: 92, r:  28, s: 0.88 },
+  { x: 70, y: 92, r: -24, s: 0.88 },
+];
+
+const MESSAGES = [
+  "다른 카드를\n뒤집어주세요.",
+  "주주 찐자\n바보..",
+  "그냥 내가 말하면\n화 풀리던데..",
+  "너랑 있을 때\n가장 나다운 내가\n되는 것 같아.",
+  "가끔 싸우거나 이유 없이\n짜증낸 적도 있었지만\n사실은 니콜라스가\n옆에 있어줘서 기뻐.",
+  "네가 안 귀여우면\n누가 귀여워?",
+  "반지 사이즈\n어떻게 알았어?",
+  "내 새끼 손가락.",
+  "우리 주주\n또 사고쳤네.",
+  "의주는 저에게\n대체불가한 존재예요.",
+];
+
+const RED = new Set(["♥","♦"]);
+const sc  = s => RED.has(s) ? 'sr' : 'sb';
+
+function backHTML() {
+  const SUITS = ['♠','♥','♦','♣'];
+  const s = SUITS[Math.floor(Math.random() * 4)];
+  return `<div class="cf cb"><div class="cb-hatch"></div><div class="cb-s">${s}</div></div>`;
+}
+
+function makeCard(author, pos) {
+  const wrap = document.createElement('div');
+  wrap.className = 'cw';
+  wrap.style.left = pos.x + 'vw';
+  wrap.style.top  = pos.y + 'vh';
+  wrap.style.setProperty('--r', pos.r + 'deg');
+  wrap.style.setProperty('--s', pos.s);
+
+  const topS = author.suits[0];
+  const cls  = sc(topS);
+  const suitsH = author.suits.map(s => `<span class="${sc(s)}">${s}</span>`).join('');
+
+  wrap.innerHTML = `
+    <div class="ci">
+      ${backHTML()}
+      <div class="cf cfront">
+        <div class="corner c-tl">
+          <div class="rk ${cls}">${author.rank}</div>
+          <div class="st ${cls}">${topS}</div>
+        </div>
+        <div class="cmid">
+          <div class="suits-row">${suitsH}</div>
+          <div class="cname">${author.name}</div>
+          ${author.handle ? `<div class="chandle">${author.handle}</div>` : ''}
+        </div>
+        <div class="corner c-br">
+          <div class="rk ${cls}">${author.rank}</div>
+          <div class="st ${cls}">${topS}</div>
+        </div>
+      </div>
+    </div>`;
+
+  if (author.url && author.url !== '#') {
+    wrap.addEventListener('click', () => window.open(author.url, '_blank', 'noopener'));
+  }
+  return wrap;
+}
+
+function makeDecorCard(pos, msgIdx) {
+  const msg = MESSAGES[msgIdx % MESSAGES.length];
+  const wrap = document.createElement('div');
+  wrap.className = 'cw';
+  wrap.style.left = pos.x + 'vw';
+  wrap.style.top  = pos.y + 'vh';
+  wrap.style.setProperty('--r', pos.r + 'deg');
+  wrap.style.setProperty('--s', pos.s);
+  wrap.style.zIndex = '6';
+
+  const msgHtml = msg.replace(/\n/g, '<br>');
+  wrap.innerHTML = `
+    <div class="ci">
+      ${backHTML()}
+      <div class="cf cmsg">
+        <div class="cmsg-text">${msgHtml}</div>
+      </div>
+    </div>`;
+  return wrap;
+}
+
+function makeGridCard(author) {
+  const div = document.createElement('div');
+  div.className = 'gc';
+  const suitsH = author.suits.map(s => `<span class="${sc(s)}">${s}</span>`).join('');
+  div.innerHTML = `
+    <div class="gc-rank">${author.rank}</div>
+    <div class="gc-suits">${suitsH}</div>
+    <div class="gc-name">${author.name}</div>
+    ${author.handle ? `<div class="gc-handle">${author.handle}</div>` : ''}`;
+  if (author.url && author.url !== '#') {
+    div.addEventListener('click', () => window.open(author.url, '_blank', 'noopener'));
+  }
+  return div;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const field   = document.getElementById('card-field');
+  const mobGrid = document.getElementById('mob-grid');
+
+  authors.forEach((a, i) => {
+    field.appendChild(makeCard(a, SCATTER[i]));
+    mobGrid.appendChild(makeGridCard(a));
+  });
+
+  const msgOrder = MESSAGES.map((_, i) => i).sort(() => Math.random() - 0.5);
+  DECOR.forEach((pos, i) => field.appendChild(makeDecorCard(pos, msgOrder[i])));
+});
+</script>
+</body>
+</html>

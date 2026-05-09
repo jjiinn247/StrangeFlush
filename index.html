@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strange Flush</title>
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;          /* 스크롤 없음 */
+    background: #100808;
+    font-family: 'Pretendard', sans-serif;
+    color: #fff;
+  }
+
+  /* ── 배경 이미지 ── */
+  #bg {
+    position: fixed; inset: 0; z-index: 0;
+    background: url('concept image.jpg') center 30% / cover no-repeat;
+    filter: brightness(0.45) saturate(1.3);
+  }
+
+  /* ── 어두운 오버레이 ── */
+  #overlay {
+    position: fixed; inset: 0; z-index: 1;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%,
+      rgba(8,2,2,0) 0%, rgba(8,2,2,0.45) 55%, rgba(8,2,2,0.85) 100%);
+    pointer-events: none;
+  }
+
+  /* ── 카드 필드 (뷰포트 전체) ── */
+  #card-field {
+    position: fixed; inset: 0; z-index: 2;
+    pointer-events: none;
+  }
+
+  /* ── 개별 카드 ── */
+  .cw {
+    position: absolute;
+    pointer-events: auto;
+    transform-origin: center center;
+    transform: translate(-50%, -50%)
+               rotate(var(--r, 0deg))
+               scale(var(--s, 1));
+    perspective: 700px;
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+    will-change: transform;
+  }
+  .cw:hover {
+    transform: translate(-50%, -50%)
+               rotate(0deg)
+               scale(calc(var(--s, 1) * 1.08))
+               translateY(-20px);
+    z-index: 100;
+  }
+
+  /* 카드 안쪽 (flip) */
+  .ci {
+    width: 108px; height: 162px;
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease 0.08s;
+  }
+  .cw:hover .ci { transform: rotateY(180deg); }
+
+  /* 카드 공통 면 */
+  .cf {
+    position: absolute; inset: 0;
+    border-radius: 9px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* 카드 뒷면 */
+  .cb {
+    background: linear-gradient(145deg, #8e0022, #6a0018, #8e0022);
+    border: 2px solid #aa0028;
+    overflow: hidden;
+  }
+  .cb::before {
+    content: '';
+    position: absolute; inset: 7px;
+    border: 1px solid rgba(180,0,40,0.5);
+    border-radius: 5px; z-index: 1;
+  }
+  .cb-hatch {
+    position: absolute; inset: 0; border-radius: 9px;
+    background-image:
+      repeating-linear-gradient(45deg,  rgba(0,0,0,0.15) 0, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 9px),
+      repeating-linear-gradient(-45deg, rgba(0,0,0,0.15) 0, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 9px);
+  }
+  .cb-s {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    font-size: 3.6rem; color: rgba(255,255,255,0.1);
+    line-height: 1; user-select: none; z-index: 2;
+  }
+
+  /* 카드 앞면 */
+  .cfront {
+    background: linear-gradient(150deg, #faf6ee, #ede4d4);
+    border: 2px solid #c5bcaa;
+    transform: rotateY(180deg);
+    display: flex; flex-direction: column;
+    padding: 6px 5px; overflow: hidden;
+  }
+  .corner {
+    display: flex; flex-direction: column;
+    align-items: center; width: 18px; line-height: 1.1;
+  }
+  .corner .rk {
+    font-family: 'Pretendard', sans-serif;
+    font-weight: 700; font-size: 0.76rem; line-height: 1;
+  }
+  .corner .st { font-size: 0.62rem; line-height: 1; }
+  .c-tl { align-self: flex-start; }
+  .c-br { align-self: flex-end; transform: rotate(180deg); margin-top: auto; }
+
+  .cmid {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px; min-height: 0;
+  }
+  .suits-row { display: flex; gap: 5px; font-size: 1.35rem; line-height: 1; }
+  .cname {
+    font-family: 'Pretendard', sans-serif;
+    font-size: 0.68rem; font-weight: 600;
+    color: #1a0808; text-align: center;
+    white-space: nowrap; line-height: 1.2;
+  }
+  .chandle {
+    font-family: 'Pretendard', sans-serif;
+    font-size: 0.42rem; color: #5a1a28;
+    text-align: center; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; max-width: 90px;
+  }
+  .sr { color: #cc0000; }
+  .sb { color: #1a0808; }
+
+  /* ── 메시지 카드 앞면 ── */
+  .cmsg {
+    background: linear-gradient(150deg, #faf6ee, #ede4d4);
+    border: 2px solid #c5bcaa;
+    transform: rotateY(180deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 10px;
+    text-align: center;
+    border-radius: 9px;
+  }
+  .cmsg-text {
+    font-family: 'Pretendard', sans-serif;
+    font-size: 0.56rem;
+    font-weight: 400;
+    color: #2a0a10;
+    line-height: 1.65;
+    word-break: keep-all;
+  }
+
+  /* ── 중앙 히어로 (로고만) ── */
+  #hero {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex;
+    align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+
+  /* ── 멘트 텍스트 (카드 뒤) ── */
+  #hero-text {
+    position: fixed;
+    left: 50%;
+    top: calc(50% + min(210px, 21vw) + 1rem);
+    transform: translateX(-50%);
+    z-index: 1;              /* 카드 필드(z-index:2) 보다 아래 */
+    text-align: center;
+    line-height: 1.7;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  #logo-link {
+    display: block;
+    pointer-events: auto;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  #logo-img {
+    display: block;
+    width: min(420px, 62vw);
+    height: auto;
+    filter: invert(1);
+    mix-blend-mode: screen;
+  }
+
+  #hero-text {
+    text-align: center;
+    line-height: 1.7;
+  }
+  #hero-text .line1 {
+    font-size: clamp(0.6rem, 1.4vw, 0.82rem);
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    color: rgba(255,255,255,0.7);
+  }
+  #hero-text .line2 {
+    font-size: clamp(0.75rem, 1.8vw, 1rem);
+    font-weight: 600;
+    letter-spacing: 0.45em;
+    color: #fff;
+  }
+
+  /* ── 모바일 그리드 ── */
+  #mobile-view {
+    display: none;
+    position: fixed; inset: 0; z-index: 10;
+    overflow-y: auto;
+    flex-direction: column; align-items: center;
+    padding: 2rem 1rem 2rem;
+    gap: 1.5rem;
+  }
+  #mob-logo {
+    display: block;
+    width: min(260px, 72vw); height: auto;
+    filter: invert(1);
+    mix-blend-mode: screen;
+  }
+  #mob-text {
+    text-align: center; line-height: 1.7;
+  }
+  #mob-text .line1 {
+    font-size: 0.68rem; font-weight: 400;
+    letter-spacing: 0.2em; color: rgba(255,255,255,0.65);
+  }
+  #mob-text .line2 {
+    font-size: 0.85rem; font-weight: 600;
+    letter-spacing: 0.4em; color: #fff;
+  }
+  .card-grid {
+    width: 100%; max-width: 520px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem;
+  }
+  .gc {
+    background: rgba(20,5,5,0.7);
+    border: 1px solid rgba(200,0,58,0.25);
+    border-radius: 10px; padding: 1rem 0.75rem;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.4rem;
+    cursor: pointer; text-align: center;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .gc:hover { border-color: #c8003a; transform: translateY(-3px); }
+  .gc-rank {
+    font-size: 0.58rem; font-weight: 400;
+    letter-spacing: 0.15em; color: rgba(200,0,58,0.6);
+  }
+  .gc-suits { display: flex; gap: 4px; font-size: 1.1rem; }
+  .gc-name  { font-size: 0.85rem; font-weight: 600; color: #fff; }
+  .gc-handle { font-size: 0.58rem; color: rgba(255,255,255,0.45); }
+
+  @media (max-width: 768px) {
+    #card-field, #hero, #overlay { display: none; }
+    #mobile-view { display: flex; }
+  }
+  @media (max-width: 420px) {
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+<div id="overlay"></div>
+
+<!-- 카드 필드 (데스크탑) -->
+<div id="card-field"></div>
+
+<!-- 히어로 로고 (카드 위) -->
+<div id="hero">
+  <a id="logo-link" href="https://x.com/ncejanthology" target="_blank" rel="noopener">
+    <img id="logo-img" src="stangeflush-logo2-title.png" alt="Strange Flush">
+  </a>
+</div>
+
+<!-- 멘트 텍스트 (카드 뒤) -->
+<div id="hero-text">
+  <div class="line1">Nicholas ♦ EJ &nbsp;&nbsp;·&nbsp;&nbsp; Only Event &nbsp;&nbsp;·&nbsp;&nbsp; 2027</div>
+  <div class="line2">ANTHOLOGY 2</div>
+</div>
+
+<!-- 모바일 뷰 -->
+<div id="mobile-view">
+  <img id="mob-logo" src="stangeflush-logo2-title.png" alt="Strange Flush">
+  <div id="mob-text">
+    <div class="line1">Nicholas ♦ EJ · Only Event · 2027</div>
+    <div class="line2">ANTHOLOGY 2</div>
+  </div>
+  <div class="card-grid" id="mob-grid"></div>
+</div>
+
+<script>
+/* ── 작가 데이터 ── */
+const authors = [
+  { name:"개좋음",   handle:"@crycrycrycrycxx", url:"https://twitter.com/crycrycrycrycxx", suits:["♥","♠","♦"], rank:"A"  },
+  { name:"딸기공격", handle:"@00079000_",        url:"https://twitter.com/00079000_",        suits:["♣","♥","♦"], rank:"2"  },
+  { name:"무끼",     handle:"@mukkime",          url:"https://twitter.com/mukkime",          suits:["♠","♦","♣"], rank:"3"  },
+  { name:"변칸쵸",   handle:"@B_kancho_",        url:"https://twitter.com/B_kancho_",        suits:["♥","♣","♠"], rank:"4"  },
+  { name:"산마",     handle:"@gomihodai",        url:"https://twitter.com/gomihodai",        suits:["♦","♥","♣"], rank:"5"  },
+  { name:"양",       handle:"@8_r0o",            url:"https://twitter.com/8_r0o",            suits:["♣","♠","♥"], rank:"6"  },
+  { name:"외네",     handle:"@oene___",          url:"https://twitter.com/oene___",          suits:["♦","♠","♣"], rank:"7"  },
+  { name:"키득먼",   handle:"@nicokidding",      url:"https://twitter.com/nicokidding",      suits:["♥","♦","♠"], rank:"8"  },
+  { name:"247",      handle:"@twntyforsvn247",   url:"https://twitter.com/twntyforsvn247",   suits:["♣","♥","♦"], rank:"9"  },
+  { name:"cedar",    handle:"@cedarinrnml",      url:"https://twitter.com/cedarinrnml",      suits:["♠","♣","♥"], rank:"10" },
+  { name:"dd",       handle:null,                url:"#",                                    suits:["♦","♣","♠"], rank:"J"  },
+  { name:"hikari",   handle:"@7997_hikari",      url:"https://twitter.com/7997_hikari",      suits:["♥","♣","♦"], rank:"Q"  },
+  { name:"okon",     handle:"@milk_milk_okon",   url:"https://twitter.com/milk_milk_okon",   suits:["♠","♥","♣"], rank:"K"  },
+];
+
+/*
+ * 인터랙티브 카드 위치 — 중앙으로 더 모으고, 크기 키움.
+ * 로고 영역(x 38~62, y 30~70) 은 일부 비워두되 가장자리 너무 멀리 두지 않음.
+ */
+const SCATTER = [
+  /* 좌측 */
+  { x: 22, y: 18, r: -44, s: 1.2  },
+  { x: 20, y: 55, r: -26, s: 1.15 },
+  { x: 22, y: 82, r: -52, s: 1.05 },
+  { x: 32, y: 10, r: -16, s: 1.1  },
+  { x: 34, y: 80, r: -36, s: 1.0  },
+  /* 우측 */
+  { x: 78, y: 18, r:  48, s: 1.2  },
+  { x: 80, y: 58, r:  30, s: 1.15 },
+  { x: 78, y: 82, r:  58, s: 1.05 },
+  { x: 68, y: 10, r:  22, s: 1.1  },
+  { x: 66, y: 80, r:  38, s: 1.0  },
+  /* 상단 가운데 */
+  { x: 40, y:  8, r:  -8, s: 1.0  },
+  { x: 60, y:  8, r:  11, s: 0.98 },
+  /* 하단 가운데 */
+  { x: 50, y: 88, r:   4, s: 1.05 },
+];
+
+/* 장식 카드 — 뒤집으면 메시지 표시, 중앙 근처로 더 모음 */
+const DECOR = [
+  { x: 32, y: 36, r:  16, s: 1.05 },
+  { x: 40, y: 22, r:  -7, s: 1.0  },
+  { x: 38, y: 82, r:  20, s: 0.98 },
+  { x: 62, y: 82, r: -16, s: 0.98 },
+  { x: 60, y: 22, r:  10, s: 1.0  },
+  { x: 68, y: 40, r:  44, s: 1.05 },
+  { x: 50, y:  4, r:  -4, s: 0.92 },
+  { x: 16, y: 46, r: -68, s: 1.0  },
+  { x: 84, y: 52, r:  70, s: 1.0  },
+  { x: 30, y: 92, r:  28, s: 0.88 },
+  { x: 70, y: 92, r: -24, s: 0.88 },
+];
+
+/* 뒤집었을 때 나올 메시지 (랜덤 배정) */
+const MESSAGES = [
+  "다른 카드를\n뒤집어주세요.",
+  "주주 찐자\n바보..",
+  "그냥 내가 말하면\n화 풀리던데..",
+  "너랑 있을 때\n가장 나다운 내가\n되는 것 같아.",
+  "가끔 싸우거나 이유 없이\n짜증낸 적도 있었지만\n사실은 니콜라스가\n옆에 있어줘서 기뻐.",
+  "네가 안 귀여우면\n누가 귀여워?",
+  "반지 사이즈\n어떻게 알았어?",
+  "내 새끼 손가락.",
+  "우리 주주\n또 사고쳤네.",
+  "의주는 저에게\n대체불가한 존재예요.",
+];
+
+const RED = new Set(["♥","♦"]);
+const sc  = s => RED.has(s) ? 'sr' : 'sb';
+
+/* ── 카드 뒷면 HTML ── */
+function backHTML() {
+  const SUITS = ['♠','♥','♦','♣'];
+  const s = SUITS[Math.floor(Math.random() * 4)];
+  return `<div class="cf cb"><div class="cb-hatch"></div><div class="cb-s">${s}</div></div>`;
+}
+
+/* ── 인터랙티브 카드 생성 ── */
+function makeCard(author, pos) {
+  const wrap = document.createElement('div');
+  wrap.className = 'cw';
+  wrap.style.left = pos.x + 'vw';
+  wrap.style.top  = pos.y + 'vh';
+  wrap.style.setProperty('--r', pos.r + 'deg');
+  wrap.style.setProperty('--s', pos.s);
+
+  const topS = author.suits[0];
+  const cls  = sc(topS);
+  const suitsH = author.suits.map(s => `<span class="${sc(s)}">${s}</span>`).join('');
+
+  wrap.innerHTML = `
+    <div class="ci">
+      ${backHTML()}
+      <div class="cf cfront">
+        <div class="corner c-tl">
+          <div class="rk ${cls}">${author.rank}</div>
+          <div class="st ${cls}">${topS}</div>
+        </div>
+        <div class="cmid">
+          <div class="suits-row">${suitsH}</div>
+          <div class="cname">${author.name}</div>
+          ${author.handle ? `<div class="chandle">${author.handle}</div>` : ''}
+        </div>
+        <div class="corner c-br">
+          <div class="rk ${cls}">${author.rank}</div>
+          <div class="st ${cls}">${topS}</div>
+        </div>
+      </div>
+    </div>`;
+
+  if (author.url && author.url !== '#') {
+    wrap.addEventListener('click', () => window.open(author.url, '_blank', 'noopener'));
+  }
+  return wrap;
+}
+
+/* ── 메시지 카드 생성 (장식 → 뒤집으면 랜덤 메시지) ── */
+function makeDecorCard(pos, msgIdx) {
+  const msg = MESSAGES[msgIdx % MESSAGES.length];
+
+  const wrap = document.createElement('div');
+  wrap.className = 'cw';                       /* 인터랙티브 카드와 동일한 hover/flip */
+  wrap.style.left = pos.x + 'vw';
+  wrap.style.top  = pos.y + 'vh';
+  wrap.style.setProperty('--r', pos.r + 'deg');
+  wrap.style.setProperty('--s', pos.s);
+  wrap.style.zIndex = '6';                    /* 작가 카드보다 약간 뒤 */
+
+  /* 줄바꿈 처리 */
+  const msgHtml = msg.replace(/\n/g, '<br>');
+
+  wrap.innerHTML = `
+    <div class="ci">
+      ${backHTML()}
+      <div class="cf cmsg">
+        <div class="cmsg-text">${msgHtml}</div>
+      </div>
+    </div>`;
+
+  return wrap;
+}
+
+/* ── 모바일 그리드 카드 ── */
+function makeGridCard(author) {
+  const div = document.createElement('div');
+  div.className = 'gc';
+  const suitsH = author.suits.map(s => `<span class="${sc(s)}">${s}</span>`).join('');
+  div.innerHTML = `
+    <div class="gc-rank">${author.rank}</div>
+    <div class="gc-suits">${suitsH}</div>
+    <div class="gc-name">${author.name}</div>
+    ${author.handle ? `<div class="gc-handle">${author.handle}</div>` : ''}`;
+  if (author.url && author.url !== '#') {
+    div.addEventListener('click', () => window.open(author.url, '_blank', 'noopener'));
+  }
+  return div;
+}
+
+/* ── 초기화 ── */
+document.addEventListener('DOMContentLoaded', () => {
+  const field   = document.getElementById('card-field');
+  const mobGrid = document.getElementById('mob-grid');
+
+  /* 인터랙티브 카드 */
+  authors.forEach((a, i) => {
+    field.appendChild(makeCard(a, SCATTER[i]));
+    mobGrid.appendChild(makeGridCard(a));
+  });
+
+  /* 메시지 카드 — 메시지 순서를 섞어서 배정 */
+  const msgOrder = MESSAGES.map((_, i) => i)
+    .sort(() => Math.random() - 0.5);
+  DECOR.forEach((pos, i) => field.appendChild(makeDecorCard(pos, msgOrder[i])));
+});
+</script>
+</body>
+</html>
