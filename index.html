@@ -9,6 +9,10 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  /* 탭 시 파란/빨간 하이라이트·아웃라인 제거 */
+  a, button { outline: none; -webkit-tap-highlight-color: transparent; }
+  .cw { -webkit-tap-highlight-color: transparent; }
+
   html, body {
     width: 100%; height: 100%;
     overflow: hidden;
@@ -233,34 +237,32 @@ const DECOR_DESK = [
  * SCATTER: 바깥 원, DECOR: 안쪽 원
  */
 const SCATTER_MOB = [
-  /* 바깥 원 — 12시 방향부터 시계 방향 */
-  { x:50, y:16, r: -4, s:1.0  },  /* 12시 */
-  { x:67, y:20, r: 24, s:1.0  },  /* 1시  */
-  { x:80, y:31, s:1.0, r: 50  },  /* 2시  */
-  { x:86, y:47, r: 78, s:1.0  },  /* 3시  */
-  { x:82, y:63, r:106, s:1.0  },  /* 4시  */
-  { x:70, y:75, r:134, s:1.0  },  /* 5시  */
-  { x:54, y:81, r:162, s:1.0  },  /* 6시  */
-  { x:38, y:80, r:-162, s:1.0 },  /* 7시  */
-  { x:24, y:73, r:-136, s:1.0 },  /* 8시  */
-  { x:15, y:60, r:-110, s:1.0 },  /* 9시  */
-  { x:14, y:45, r:-82,  s:1.0 },  /* 10시 */
-  { x:21, y:31, r:-54,  s:1.0 },  /* 11시 */
-  { x:34, y:20, r:-26,  s:1.0 },  /* 12시-11시 사이 */
+  { x:47, y:13, r: -8,  s:1.0  },
+  { x:66, y:17, r: 20,  s:1.0  },
+  { x:79, y:28, r: 46,  s:1.0  },
+  { x:88, y:43, r: 74,  s:1.0  },
+  { x:84, y:62, r:106,  s:1.0  },
+  { x:73, y:73, r:130,  s:1.0  },
+  { x:56, y:83, r:160,  s:1.0  },
+  { x:38, y:82, r:-158, s:1.0  },
+  { x:22, y:75, r:-138, s:1.0  },
+  { x:11, y:61, r:-112, s:1.0  },
+  { x:12, y:44, r: -84, s:1.0  },
+  { x:19, y:28, r: -55, s:1.0  },
+  { x:35, y:18, r: -27, s:1.0  },
 ];
 const DECOR_MOB = [
-  /* 안쪽 원 */
-  { x:50, y:30, r: -6, s:0.95 },
-  { x:63, y:33, r: 22, s:0.95 },
-  { x:73, y:43, r: 50, s:0.95 },
-  { x:75, y:56, r: 78, s:0.9  },
-  { x:67, y:66, r:106, s:0.95 },
-  { x:54, y:71, r:132, s:0.9  },
-  { x:40, y:70, r:-132, s:0.9 },
-  { x:28, y:63, r:-106, s:0.95},
-  { x:24, y:52, r:-78,  s:0.9 },
-  { x:27, y:40, r:-50,  s:0.95},
-  { x:38, y:32, r:-22,  s:0.95},
+  { x:51, y:26, r: -8,  s:0.95 },
+  { x:65, y:29, r: 20,  s:0.95 },
+  { x:74, y:38, r: 48,  s:0.95 },
+  { x:78, y:53, r: 80,  s:0.9  },
+  { x:70, y:65, r:104,  s:0.95 },
+  { x:57, y:72, r:130,  s:0.9  },
+  { x:42, y:71, r:-130, s:0.9  },
+  { x:29, y:65, r:-104, s:0.95 },
+  { x:23, y:52, r: -78, s:0.9  },
+  { x:27, y:38, r: -50, s:0.95 },
+  { x:37, y:29, r: -24, s:0.95 },
 ];
 
 const MESSAGES = [
@@ -299,6 +301,7 @@ function flipCard(wrap) {
   }
   hero.style.zIndex = '1';   /* hero를 card-field(z:2) 아래로 */
   currentFlipped = wrap;
+  wrap.style.zIndex = '999';
   wrap.classList.add('flipped');
 }
 
@@ -309,6 +312,7 @@ function closeFlipped() {
   currentFlipped = null;
   c.classList.add('returning');
   c.classList.remove('flipped');
+  c.style.zIndex = '';
   setTimeout(() => c.classList.remove('returning'), 420);
   /* 복귀 완료 후 hero 원상 복구 */
   if (heroTimer) clearTimeout(heroTimer);
@@ -363,8 +367,9 @@ function makeCard(author, pos) {
   if (isTouch) {
     wrap.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (e.target.closest('a')) return;
       if (!wrap.classList.contains('flipped')) flipCard(wrap);
-      /* 이미 뒤집힌 상태에서 카드 본체 탭 → 아무것도 안 함 (배경 탭으로 닫기) */
+      else closeFlipped();
     });
   } else if (hasLink) {
     wrap.addEventListener('click', () => window.open(author.url, '_blank', 'noopener'));
