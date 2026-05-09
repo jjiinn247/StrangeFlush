@@ -11,20 +11,18 @@
 
   html, body {
     width: 100%; height: 100%;
-    overflow: hidden;          /* 스크롤 없음 */
+    overflow: hidden;
     background: #100808;
     font-family: 'Pretendard', sans-serif;
     color: #fff;
   }
 
-  /* ── 배경 이미지 ── */
   #bg {
     position: fixed; inset: 0; z-index: 0;
     background: url('concept image.jpg') center 30% / cover no-repeat;
     filter: brightness(0.45) saturate(1.3);
   }
 
-  /* ── 어두운 오버레이 ── */
   #overlay {
     position: fixed; inset: 0; z-index: 1;
     background: radial-gradient(ellipse 70% 60% at 50% 50%,
@@ -32,7 +30,6 @@
     pointer-events: none;
   }
 
-  /* ── 카드 필드 (뷰포트 전체) ── */
   #card-field {
     position: fixed; inset: 0; z-index: 2;
     pointer-events: none;
@@ -43,45 +40,48 @@
     position: absolute;
     pointer-events: auto;
     transform-origin: center center;
-    transform: translate(-50%, -50%)
-               rotate(var(--r, 0deg))
-               scale(var(--s, 1));
+    transform: translate(-50%, -50%) rotate(var(--r, 0deg)) scale(var(--s, 1));
     perspective: 700px;
     transform-style: preserve-3d;
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
     cursor: pointer;
     will-change: transform;
   }
+
   /* 데스크탑: 호버로 뒤집기 */
   @media (hover: hover) {
     .cw:hover {
-      transform: translate(-50%, -50%)
-                 rotate(0deg)
-                 scale(calc(var(--s, 1) * 1.08))
-                 translateY(-20px);
+      transform: translate(-50%, -50%) rotate(0deg) scale(calc(var(--s, 1) * 1.08)) translateY(-20px);
       z-index: 100;
     }
     .cw:hover .ci { transform: rotateY(180deg); }
+    .cw:hover .cfront,
+    .cw:hover .cmsg { pointer-events: auto; }
   }
 
-  /* 모바일: 탭으로 뒤집기 */
-  .cw.flipped {
-    transform: translate(-50%, -50%)
-               rotate(0deg)
-               scale(calc(var(--s, 1) * 1.08))
-               translateY(-20px);
-    z-index: 100;
+  /* 모바일: 탭 시 화면 중앙으로 떠오름 */
+  @media (hover: none) {
+    .cw.flipped {
+      transform: translate(
+        calc(-50% + 50vw - var(--ox)),
+        calc(-50% + 46vh - var(--oy))
+      ) rotate(0deg) scale(1.35);
+      z-index: 200;
+    }
+    .cw.flipped .ci { transform: rotateY(180deg); }
+    .cw.flipped .cfront,
+    .cw.flipped .cmsg { pointer-events: auto; }
   }
-  .cw.flipped .ci { transform: rotateY(180deg); }
 
-  /* 카드 안쪽 (flip) */
+  /* 앞면은 기본 pointer-events 끔 (뒤집혔을 때만 활성) */
+  .cfront, .cmsg { pointer-events: none; }
+
   .ci {
     width: 108px; height: 162px;
     transform-style: preserve-3d;
     transition: transform 0.5s ease 0.08s;
   }
 
-  /* 카드 공통 면 */
   .cf {
     position: absolute; inset: 0;
     border-radius: 9px;
@@ -89,7 +89,7 @@
     -webkit-backface-visibility: hidden;
   }
 
-  /* 카드 뒷면 */
+  /* 뒷면 */
   .cb {
     background: linear-gradient(145deg, #8e0022, #6a0018, #8e0022);
     border: 2px solid #aa0028;
@@ -114,7 +114,7 @@
     line-height: 1; user-select: none; z-index: 2;
   }
 
-  /* 카드 앞면 */
+  /* 앞면 (작가) */
   .cfront {
     background: linear-gradient(150deg, #faf6ee, #ede4d4);
     border: 2px solid #c5bcaa;
@@ -126,10 +126,7 @@
     display: flex; flex-direction: column;
     align-items: center; width: 18px; line-height: 1.1;
   }
-  .corner .rk {
-    font-family: 'Pretendard', sans-serif;
-    font-weight: 700; font-size: 0.76rem; line-height: 1;
-  }
+  .corner .rk { font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 0.76rem; line-height: 1; }
   .corner .st { font-size: 0.62rem; line-height: 1; }
   .c-tl { align-self: flex-start; }
   .c-br { align-self: flex-end; transform: rotate(180deg); margin-top: auto; }
@@ -140,152 +137,54 @@
     gap: 8px; min-height: 0;
   }
   .suits-row { display: flex; gap: 5px; font-size: 1.35rem; line-height: 1; }
-  .cname {
-    font-family: 'Pretendard', sans-serif;
-    font-size: 0.68rem; font-weight: 600;
-    color: #1a0808; text-align: center;
-    white-space: nowrap; line-height: 1.2;
-  }
+  .cname { font-family: 'Pretendard', sans-serif; font-size: 0.68rem; font-weight: 600; color: #1a0808; text-align: center; white-space: nowrap; line-height: 1.2; }
   .chandle {
     font-family: 'Pretendard', sans-serif;
     font-size: 0.42rem; color: #5a1a28;
     text-align: center; white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis; max-width: 90px;
+    text-decoration: none; display: block;
   }
+  .chandle:hover { text-decoration: underline; }
   .sr { color: #cc0000; }
   .sb { color: #1a0808; }
 
-  /* ── 메시지 카드 앞면 ── */
+  /* 앞면 (메시지) */
   .cmsg {
     background: linear-gradient(150deg, #faf6ee, #ede4d4);
     border: 2px solid #c5bcaa;
     transform: rotateY(180deg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 14px 10px;
-    text-align: center;
-    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 14px 10px; text-align: center; border-radius: 9px;
   }
   .cmsg-text {
     font-family: 'Pretendard', sans-serif;
-    font-size: 0.56rem;
-    font-weight: 400;
-    color: #2a0a10;
-    line-height: 1.65;
-    word-break: keep-all;
+    font-size: 0.56rem; font-weight: 400;
+    color: #2a0a10; line-height: 1.65; word-break: keep-all;
   }
 
-  /* ── 중앙 히어로 (로고만) ── */
+  /* 히어로 로고 */
   #hero {
     position: fixed; inset: 0; z-index: 10;
-    display: flex;
-    align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     pointer-events: none;
   }
+  #logo-link { display: block; pointer-events: auto; cursor: pointer; text-decoration: none; }
+  #logo-img { display: block; width: min(420px, 62vw); height: auto; filter: invert(1); mix-blend-mode: screen; }
 
-  /* ── 멘트 텍스트 (카드 뒤) ── */
+  /* 멘트 텍스트 */
   #hero-text {
-    position: fixed;
-    left: 50%;
-    top: calc(50% + min(210px, 21vw) + 1rem);
-    transform: translateX(-50%);
-    z-index: 1;              /* 카드 필드(z-index:2) 보다 아래 */
-    text-align: center;
-    line-height: 1.7;
-    pointer-events: none;
-    white-space: nowrap;
+    position: fixed; left: 50%; top: calc(50% + min(210px, 21vw) + 1rem);
+    transform: translateX(-50%); z-index: 1;
+    text-align: center; line-height: 1.7; pointer-events: none; white-space: nowrap;
   }
+  #hero-text .line1 { font-size: clamp(0.6rem, 1.4vw, 0.82rem); font-weight: 400; letter-spacing: 0.22em; color: rgba(255,255,255,0.7); }
+  #hero-text .line2 { font-size: clamp(0.75rem, 1.8vw, 1rem); font-weight: 600; letter-spacing: 0.45em; color: #fff; }
 
-  #logo-link {
-    display: block;
-    pointer-events: auto;
-    cursor: pointer;
-    text-decoration: none;
-  }
-  #logo-img {
-    display: block;
-    width: min(420px, 62vw);
-    height: auto;
-    filter: invert(1);
-    mix-blend-mode: screen;
-  }
-
-  #hero-text {
-    text-align: center;
-    line-height: 1.7;
-  }
-  #hero-text .line1 {
-    font-size: clamp(0.6rem, 1.4vw, 0.82rem);
-    font-weight: 400;
-    letter-spacing: 0.22em;
-    color: rgba(255,255,255,0.7);
-  }
-  #hero-text .line2 {
-    font-size: clamp(0.75rem, 1.8vw, 1rem);
-    font-weight: 600;
-    letter-spacing: 0.45em;
-    color: #fff;
-  }
-
-  /* ── 모바일 그리드 ── */
-  #mobile-view {
-    display: none;
-    position: fixed; inset: 0; z-index: 10;
-    overflow-y: auto;
-    flex-direction: column; align-items: center;
-    padding: 2rem 1rem 2rem;
-    gap: 1.5rem;
-  }
-  #mob-logo {
-    display: block;
-    width: min(260px, 72vw); height: auto;
-    filter: invert(1);
-    mix-blend-mode: screen;
-  }
-  #mob-text {
-    text-align: center; line-height: 1.7;
-  }
-  #mob-text .line1 {
-    font-size: 0.68rem; font-weight: 400;
-    letter-spacing: 0.2em; color: rgba(255,255,255,0.65);
-  }
-  #mob-text .line2 {
-    font-size: 0.85rem; font-weight: 600;
-    letter-spacing: 0.4em; color: #fff;
-  }
-  .card-grid {
-    width: 100%; max-width: 520px;
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem;
-  }
-  .gc {
-    background: rgba(20,5,5,0.7);
-    border: 1px solid rgba(200,0,58,0.25);
-    border-radius: 10px; padding: 1rem 0.75rem;
-    display: flex; flex-direction: column;
-    align-items: center; gap: 0.4rem;
-    cursor: pointer; text-align: center;
-    transition: border-color 0.2s, transform 0.2s;
-  }
-  .gc:hover { border-color: #c8003a; transform: translateY(-3px); }
-  .gc-rank {
-    font-size: 0.58rem; font-weight: 400;
-    letter-spacing: 0.15em; color: rgba(200,0,58,0.6);
-  }
-  .gc-suits { display: flex; gap: 4px; font-size: 1.1rem; }
-  .gc-name  { font-size: 0.85rem; font-weight: 600; color: #fff; }
-  .gc-handle { font-size: 0.58rem; color: rgba(255,255,255,0.45); }
-
+  /* ── 모바일 크기 조정 ── */
   @media (max-width: 768px) {
-    /* 모바일 그리드 뷰 숨기고 카드 필드 사용 */
-    #mobile-view { display: none !important; }
-    /* 제목 텍스트 숨기기 (로고에 이미 포함) */
     #hero-text { display: none; }
-    /* 배경: cover 대신 덜 확대된 크기로 */
-    #bg { background-size: auto 55%; background-position: center center; }
-    /* 로고 크기 */
-    #logo-img { width: min(240px, 65vw); }
-    /* 카드 크기 축소 */
+    #logo-img { width: min(240px, 62vw); }
     .ci { width: 72px; height: 108px; }
     .cb-s { font-size: 2.4rem; }
     .cb::before { inset: 5px; }
@@ -295,10 +194,10 @@
     .corner .st { font-size: 0.4rem; }
     .suits-row { font-size: 0.9rem; gap: 3px; }
     .cname { font-size: 0.44rem; }
-    .chandle { font-size: 0.28rem; max-width: 60px; }
+    .chandle { font-size: 0.3rem; max-width: 60px; }
     .cfront { padding: 4px 3px; }
     .cmsg { padding: 8px 6px; }
-    .cmsg-text { font-size: 0.37rem; }
+    .cmsg-text { font-size: 0.38rem; }
     .cmid { gap: 5px; }
   }
 </style>
@@ -307,35 +206,20 @@
 
 <div id="bg"></div>
 <div id="overlay"></div>
-
-<!-- 카드 필드 (데스크탑) -->
 <div id="card-field"></div>
 
-<!-- 히어로 로고 (카드 위) -->
 <div id="hero">
   <a id="logo-link" href="https://x.com/ncejanthology" target="_blank" rel="noopener">
     <img id="logo-img" src="stangeflush-logo2-title.png" alt="Strange Flush">
   </a>
 </div>
 
-<!-- 멘트 텍스트 (카드 뒤) -->
 <div id="hero-text">
   <div class="line1">Nicholas ♦ EJ &nbsp;&nbsp;·&nbsp;&nbsp; Only Event &nbsp;&nbsp;·&nbsp;&nbsp; 2027</div>
   <div class="line2">ANTHOLOGY 2</div>
 </div>
 
-<!-- 모바일 뷰 -->
-<div id="mobile-view">
-  <img id="mob-logo" src="stangeflush-logo2-title.png" alt="Strange Flush">
-  <div id="mob-text">
-    <div class="line1">Nicholas ♦ EJ · Only Event · 2027</div>
-    <div class="line2">ANTHOLOGY 2</div>
-  </div>
-  <div class="card-grid" id="mob-grid"></div>
-</div>
-
 <script>
-/* ── 작가 데이터 ── */
 const authors = [
   { name:"개좋음",   handle:"@crycrycrycrycxx", url:"https://twitter.com/crycrycrycrycxx", suits:["♥","♠","♦"], rank:"A"  },
   { name:"딸기공격", handle:"@00079000_",        url:"https://twitter.com/00079000_",        suits:["♣","♥","♦"], rank:"2"  },
@@ -352,46 +236,48 @@ const authors = [
   { name:"okon",     handle:"@milk_milk_okon",   url:"https://twitter.com/milk_milk_okon",   suits:["♠","♥","♣"], rank:"K"  },
 ];
 
-/*
- * 인터랙티브 카드 위치 — 중앙으로 더 모으고, 크기 키움.
- * 로고 영역(x 38~62, y 30~70) 은 일부 비워두되 가장자리 너무 멀리 두지 않음.
- */
-const SCATTER = [
-  /* 좌측 */
-  { x: 22, y: 18, r: -44, s: 1.2  },
-  { x: 20, y: 55, r: -26, s: 1.15 },
-  { x: 22, y: 82, r: -52, s: 1.05 },
-  { x: 32, y: 10, r: -16, s: 1.1  },
-  { x: 34, y: 80, r: -36, s: 1.0  },
-  /* 우측 */
-  { x: 78, y: 18, r:  48, s: 1.2  },
-  { x: 80, y: 58, r:  30, s: 1.15 },
-  { x: 78, y: 82, r:  58, s: 1.05 },
-  { x: 68, y: 10, r:  22, s: 1.1  },
-  { x: 66, y: 80, r:  38, s: 1.0  },
-  /* 상단 가운데 */
-  { x: 40, y:  8, r:  -8, s: 1.0  },
-  { x: 60, y:  8, r:  11, s: 0.98 },
-  /* 하단 가운데 */
+/* ── 데스크탑 포지션 ── */
+const SCATTER_DESK = [
+  { x: 22, y: 18, r: -44, s: 1.2  }, { x: 20, y: 55, r: -26, s: 1.15 },
+  { x: 22, y: 82, r: -52, s: 1.05 }, { x: 32, y: 10, r: -16, s: 1.1  },
+  { x: 34, y: 80, r: -36, s: 1.0  }, { x: 78, y: 18, r:  48, s: 1.2  },
+  { x: 80, y: 58, r:  30, s: 1.15 }, { x: 78, y: 82, r:  58, s: 1.05 },
+  { x: 68, y: 10, r:  22, s: 1.1  }, { x: 66, y: 80, r:  38, s: 1.0  },
+  { x: 40, y:  8, r:  -8, s: 1.0  }, { x: 60, y:  8, r:  11, s: 0.98 },
   { x: 50, y: 88, r:   4, s: 1.05 },
 ];
-
-/* 장식 카드 — 뒤집으면 메시지 표시, 중앙 근처로 더 모음 */
-const DECOR = [
-  { x: 32, y: 36, r:  16, s: 1.05 },
-  { x: 40, y: 22, r:  -7, s: 1.0  },
-  { x: 38, y: 82, r:  20, s: 0.98 },
-  { x: 62, y: 82, r: -16, s: 0.98 },
-  { x: 60, y: 22, r:  10, s: 1.0  },
-  { x: 68, y: 40, r:  44, s: 1.05 },
-  { x: 50, y:  4, r:  -4, s: 0.92 },
-  { x: 16, y: 46, r: -68, s: 1.0  },
-  { x: 84, y: 52, r:  70, s: 1.0  },
-  { x: 30, y: 92, r:  28, s: 0.88 },
+const DECOR_DESK = [
+  { x: 32, y: 36, r:  16, s: 1.05 }, { x: 40, y: 22, r:  -7, s: 1.0  },
+  { x: 38, y: 82, r:  20, s: 0.98 }, { x: 62, y: 82, r: -16, s: 0.98 },
+  { x: 60, y: 22, r:  10, s: 1.0  }, { x: 68, y: 40, r:  44, s: 1.05 },
+  { x: 50, y:  4, r:  -4, s: 0.92 }, { x: 16, y: 46, r: -68, s: 1.0  },
+  { x: 84, y: 52, r:  70, s: 1.0  }, { x: 30, y: 92, r:  28, s: 0.88 },
   { x: 70, y: 92, r: -24, s: 0.88 },
 ];
 
-/* 뒤집었을 때 나올 메시지 (랜덤 배정) */
+/* ── 모바일 포지션 (세로 화면, 로고 중심 방사형) ── */
+const SCATTER_MOB = [
+  /* 상단 */
+  { x: 14, y: 10, r: -42, s: 1.0  }, { x: 38, y:  6, r: -12, s: 0.95 },
+  { x: 62, y:  6, r:  14, s: 0.95 }, { x: 86, y: 10, r:  44, s: 1.0  },
+  /* 좌우 */
+  { x:  8, y: 34, r: -58, s: 1.0  }, { x: 92, y: 34, s: 1.0, r: 58   },
+  { x:  8, y: 60, r: -52, s: 1.0  }, { x: 92, y: 60, r:  50, s: 1.0  },
+  /* 하단 */
+  { x: 18, y: 82, r: -28, s: 0.95 }, { x: 50, y: 88, r:   2, s: 0.95 },
+  { x: 82, y: 82, r:  28, s: 0.95 },
+  /* 로고 주변 (위아래) */
+  { x: 30, y: 24, r: -18, s: 0.9  }, { x: 70, y: 24, r:  18, s: 0.9  },
+];
+const DECOR_MOB = [
+  { x: 22, y: 44, r: -34, s: 1.0  }, { x: 78, y: 44, r:  34, s: 1.0  },
+  { x: 26, y: 70, r: -20, s: 0.95 }, { x: 74, y: 70, r:  20, s: 0.95 },
+  { x: 42, y: 18, r:  -6, s: 0.9  }, { x: 58, y: 18, r:   6, s: 0.9  },
+  { x: 14, y: 76, r: -60, s: 0.88 }, { x: 86, y: 76, r:  60, s: 0.88 },
+  { x: 36, y: 80, r: -14, s: 0.88 }, { x: 64, y: 80, r:  14, s: 0.88 },
+  { x: 50, y: 94, r:   0, s: 0.85 },
+];
+
 const MESSAGES = [
   "다른 카드를\n뒤집어주세요.",
   "주주 찐자\n바보..",
@@ -405,29 +291,48 @@ const MESSAGES = [
   "의주는 저에게\n대체불가한 존재예요.",
 ];
 
-const RED = new Set(["♥","♦"]);
-const sc  = s => RED.has(s) ? 'sr' : 'sb';
+const RED    = new Set(["♥","♦"]);
+const sc     = s => RED.has(s) ? 'sr' : 'sb';
 const isTouch = !window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+const SCATTER = isTouch ? SCATTER_MOB : SCATTER_DESK;
+const DECOR   = isTouch ? DECOR_MOB   : DECOR_DESK;
 
-/* ── 카드 뒷면 HTML ── */
+let currentFlipped = null;
+
+function closeFlipped() {
+  if (currentFlipped) {
+    currentFlipped.classList.remove('flipped');
+    currentFlipped = null;
+  }
+}
+
 function backHTML() {
   const SUITS = ['♠','♥','♦','♣'];
   const s = SUITS[Math.floor(Math.random() * 4)];
   return `<div class="cf cb"><div class="cb-hatch"></div><div class="cb-s">${s}</div></div>`;
 }
 
-/* ── 인터랙티브 카드 생성 ── */
 function makeCard(author, pos) {
   const wrap = document.createElement('div');
   wrap.className = 'cw';
   wrap.style.left = pos.x + 'vw';
   wrap.style.top  = pos.y + 'vh';
-  wrap.style.setProperty('--r', pos.r + 'deg');
-  wrap.style.setProperty('--s', pos.s);
+  wrap.style.setProperty('--r',  pos.r + 'deg');
+  wrap.style.setProperty('--s',  pos.s);
+  wrap.style.setProperty('--ox', pos.x + 'vw');
+  wrap.style.setProperty('--oy', pos.y + 'vh');
 
-  const topS = author.suits[0];
-  const cls  = sc(topS);
+  const topS   = author.suits[0];
+  const cls    = sc(topS);
   const suitsH = author.suits.map(s => `<span class="${sc(s)}">${s}</span>`).join('');
+
+  /* 모바일: 핸들을 <a> 링크로, 닉네임도 링크 */
+  const nameEl = (isTouch && author.url && author.url !== '#')
+    ? `<a class="cname" style="color:#1a0808;text-decoration:none" href="${author.url}" target="_blank" rel="noopener">${author.name}</a>`
+    : `<div class="cname">${author.name}</div>`;
+  const handleEl = (author.handle && author.url && author.url !== '#')
+    ? `<a class="chandle" href="${author.url}" target="_blank" rel="noopener">${author.handle}</a>`
+    : (author.handle ? `<div class="chandle">${author.handle}</div>` : '');
 
   wrap.innerHTML = `
     <div class="ci">
@@ -439,8 +344,8 @@ function makeCard(author, pos) {
         </div>
         <div class="cmid">
           <div class="suits-row">${suitsH}</div>
-          <div class="cname">${author.name}</div>
-          ${author.handle ? `<div class="chandle">${author.handle}</div>` : ''}
+          ${nameEl}
+          ${handleEl}
         </div>
         <div class="corner c-br">
           <div class="rk ${cls}">${author.rank}</div>
@@ -450,67 +355,67 @@ function makeCard(author, pos) {
     </div>`;
 
   if (isTouch) {
-    wrap.addEventListener('click', () => {
+    wrap.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (!wrap.classList.contains('flipped')) {
+        closeFlipped();
+        currentFlipped = wrap;
         wrap.classList.add('flipped');
-      } else if (author.url && author.url !== '#') {
-        window.open(author.url, '_blank', 'noopener');
-      } else {
-        wrap.classList.remove('flipped');
       }
+      /* 이미 뒤집혀 있으면 아무것도 안 함 — 배경 탭으로 닫기 */
     });
-  } else if (author.url && author.url !== '#') {
-    wrap.addEventListener('click', () => window.open(author.url, '_blank', 'noopener'));
+  } else {
+    if (author.url && author.url !== '#') {
+      wrap.addEventListener('click', () => window.open(author.url, '_blank', 'noopener'));
+    }
   }
   return wrap;
 }
 
-/* ── 메시지 카드 생성 (장식 → 뒤집으면 랜덤 메시지) ── */
 function makeDecorCard(pos, msgIdx) {
-  const msg = MESSAGES[msgIdx % MESSAGES.length];
-
+  const msg  = MESSAGES[msgIdx % MESSAGES.length];
   const wrap = document.createElement('div');
-  wrap.className = 'cw';                       /* 인터랙티브 카드와 동일한 hover/flip */
+  wrap.className = 'cw';
   wrap.style.left = pos.x + 'vw';
   wrap.style.top  = pos.y + 'vh';
-  wrap.style.setProperty('--r', pos.r + 'deg');
-  wrap.style.setProperty('--s', pos.s);
-  wrap.style.zIndex = '6';                    /* 작가 카드보다 약간 뒤 */
-
-  /* 줄바꿈 처리 */
-  const msgHtml = msg.replace(/\n/g, '<br>');
+  wrap.style.setProperty('--r',  pos.r + 'deg');
+  wrap.style.setProperty('--s',  pos.s);
+  wrap.style.setProperty('--ox', pos.x + 'vw');
+  wrap.style.setProperty('--oy', pos.y + 'vh');
+  wrap.style.zIndex = '6';
 
   wrap.innerHTML = `
     <div class="ci">
       ${backHTML()}
       <div class="cf cmsg">
-        <div class="cmsg-text">${msgHtml}</div>
+        <div class="cmsg-text">${msg.replace(/\n/g,'<br>')}</div>
       </div>
     </div>`;
 
-  wrap.addEventListener('click', () => wrap.classList.toggle('flipped'));
+  if (isTouch) {
+    wrap.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!wrap.classList.contains('flipped')) {
+        closeFlipped();
+        currentFlipped = wrap;
+        wrap.classList.add('flipped');
+      } else {
+        closeFlipped();
+      }
+    });
+  } else {
+    wrap.addEventListener('click', () => wrap.classList.toggle('flipped'));
+  }
   return wrap;
 }
 
-/* ── 모바일 그리드 카드 ── */
-function makeGridCard(author) {
-  const div = document.createElement('div');
-  div.className = 'gc';
-  const suitsH = author.suits.map(s => `<span class="${sc(s)}">${s}</span>`).join('');
-  div.innerHTML = `
-    <div class="gc-rank">${author.rank}</div>
-    <div class="gc-suits">${suitsH}</div>
-    <div class="gc-name">${author.name}</div>
-    ${author.handle ? `<div class="gc-handle">${author.handle}</div>` : ''}`;
-  if (author.url && author.url !== '#') {
-    div.addEventListener('click', () => window.open(author.url, '_blank', 'noopener'));
-  }
-  return div;
-}
-
-/* ── 초기화 ── */
 document.addEventListener('DOMContentLoaded', () => {
   const field = document.getElementById('card-field');
+
+  /* 배경(카드 필드) 탭 → 뒤집힌 카드 닫기 */
+  if (isTouch) {
+    field.addEventListener('click', () => closeFlipped());
+  }
 
   authors.forEach((a, i) => field.appendChild(makeCard(a, SCATTER[i])));
 
