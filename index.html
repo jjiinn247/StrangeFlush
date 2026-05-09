@@ -52,13 +52,27 @@
     cursor: pointer;
     will-change: transform;
   }
-  .cw:hover {
+  /* 데스크탑: 호버로 뒤집기 */
+  @media (hover: hover) {
+    .cw:hover {
+      transform: translate(-50%, -50%)
+                 rotate(0deg)
+                 scale(calc(var(--s, 1) * 1.08))
+                 translateY(-20px);
+      z-index: 100;
+    }
+    .cw:hover .ci { transform: rotateY(180deg); }
+  }
+
+  /* 모바일: 탭으로 뒤집기 */
+  .cw.flipped {
     transform: translate(-50%, -50%)
                rotate(0deg)
                scale(calc(var(--s, 1) * 1.08))
                translateY(-20px);
     z-index: 100;
   }
+  .cw.flipped .ci { transform: rotateY(180deg); }
 
   /* 카드 안쪽 (flip) */
   .ci {
@@ -66,7 +80,6 @@
     transform-style: preserve-3d;
     transition: transform 0.5s ease 0.08s;
   }
-  .cw:hover .ci { transform: rotateY(180deg); }
 
   /* 카드 공통 면 */
   .cf {
@@ -264,11 +277,29 @@
   .gc-handle { font-size: 0.58rem; color: rgba(255,255,255,0.45); }
 
   @media (max-width: 768px) {
-    #card-field, #hero, #overlay { display: none; }
-    #mobile-view { display: flex; }
-  }
-  @media (max-width: 420px) {
-    .card-grid { grid-template-columns: 1fr; }
+    /* 모바일 그리드 뷰 숨기고 카드 필드 사용 */
+    #mobile-view { display: none !important; }
+    /* 제목 텍스트 숨기기 (로고에 이미 포함) */
+    #hero-text { display: none; }
+    /* 배경: cover 대신 덜 확대된 크기로 */
+    #bg { background-size: auto 55%; background-position: center center; }
+    /* 로고 크기 */
+    #logo-img { width: min(240px, 65vw); }
+    /* 카드 크기 축소 */
+    .ci { width: 72px; height: 108px; }
+    .cb-s { font-size: 2.4rem; }
+    .cb::before { inset: 5px; }
+    .cf { border-radius: 6px; }
+    .corner { width: 13px; }
+    .corner .rk { font-size: 0.5rem; }
+    .corner .st { font-size: 0.4rem; }
+    .suits-row { font-size: 0.9rem; gap: 3px; }
+    .cname { font-size: 0.44rem; }
+    .chandle { font-size: 0.28rem; max-width: 60px; }
+    .cfront { padding: 4px 3px; }
+    .cmsg { padding: 8px 6px; }
+    .cmsg-text { font-size: 0.37rem; }
+    .cmid { gap: 5px; }
   }
 </style>
 </head>
@@ -376,6 +407,7 @@ const MESSAGES = [
 
 const RED = new Set(["♥","♦"]);
 const sc  = s => RED.has(s) ? 'sr' : 'sb';
+const isTouch = !window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 /* ── 카드 뒷면 HTML ── */
 function backHTML() {
@@ -417,7 +449,17 @@ function makeCard(author, pos) {
       </div>
     </div>`;
 
-  if (author.url && author.url !== '#') {
+  if (isTouch) {
+    wrap.addEventListener('click', () => {
+      if (!wrap.classList.contains('flipped')) {
+        wrap.classList.add('flipped');
+      } else if (author.url && author.url !== '#') {
+        window.open(author.url, '_blank', 'noopener');
+      } else {
+        wrap.classList.remove('flipped');
+      }
+    });
+  } else if (author.url && author.url !== '#') {
     wrap.addEventListener('click', () => window.open(author.url, '_blank', 'noopener'));
   }
   return wrap;
@@ -446,6 +488,7 @@ function makeDecorCard(pos, msgIdx) {
       </div>
     </div>`;
 
+  wrap.addEventListener('click', () => wrap.classList.toggle('flipped'));
   return wrap;
 }
 
@@ -467,18 +510,11 @@ function makeGridCard(author) {
 
 /* ── 초기화 ── */
 document.addEventListener('DOMContentLoaded', () => {
-  const field   = document.getElementById('card-field');
-  const mobGrid = document.getElementById('mob-grid');
+  const field = document.getElementById('card-field');
 
-  /* 인터랙티브 카드 */
-  authors.forEach((a, i) => {
-    field.appendChild(makeCard(a, SCATTER[i]));
-    mobGrid.appendChild(makeGridCard(a));
-  });
+  authors.forEach((a, i) => field.appendChild(makeCard(a, SCATTER[i])));
 
-  /* 메시지 카드 — 메시지 순서를 섞어서 배정 */
-  const msgOrder = MESSAGES.map((_, i) => i)
-    .sort(() => Math.random() - 0.5);
+  const msgOrder = MESSAGES.map((_, i) => i).sort(() => Math.random() - 0.5);
   DECOR.forEach((pos, i) => field.appendChild(makeDecorCard(pos, msgOrder[i])));
 });
 </script>
